@@ -133,19 +133,12 @@ export default function AdminGames() {
     setBggStatus('Searching BGG…')
     try {
       const res = await fetch(
-        `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(bggQuery)}&type=boardgame`
+        `${import.meta.env.VITE_PB_URL}/api/custom/bgg/search/${encodeURIComponent(bggQuery)}`,
+        { headers: { Authorization: `Bearer ${pb.authStore.token}` } }
       )
-      const text = await res.text()
-      const doc = new DOMParser().parseFromString(text, 'text/xml')
-      const items = [...doc.querySelectorAll('item')]
-      const results = items.map((item) => ({
-        id: item.getAttribute('id'),
-        name: item.querySelector('name[type="primary"]')?.getAttribute('value')
-          || item.querySelector('name')?.getAttribute('value') || '',
-        year: item.querySelector('yearpublished')?.getAttribute('value') || '',
-      }))
-      setBggResults(results)
-      setBggStatus(results.length ? '' : 'No results found.')
+      const data = await res.json()
+      setBggResults(data.results || [])
+      setBggStatus(data.results?.length ? '' : 'No results found.')
     } catch {
       setBggStatus('Search failed.')
     } finally {
@@ -158,30 +151,21 @@ export default function AdminGames() {
     setBggResults([])
     try {
       const res = await fetch(
-        `https://boardgamegeek.com/xmlapi2/thing?id=${bggId}&stats=1`
+        `${import.meta.env.VITE_PB_URL}/api/custom/bgg/thing/${bggId}`,
+        { headers: { Authorization: `Bearer ${pb.authStore.token}` } }
       )
-      const text = await res.text()
-      const doc = new DOMParser().parseFromString(text, 'text/xml')
-      const item = doc.querySelector('item')
-      const name = item?.querySelector('name[type="primary"]')?.getAttribute('value') || ''
-      const description = item?.querySelector('description')?.textContent?.trim() || ''
-      const image = item?.querySelector('image')?.textContent?.trim() || ''
-      const thumbnail = item?.querySelector('thumbnail')?.textContent?.trim() || ''
-      const minplayers = item?.querySelector('minplayers')?.getAttribute('value') || ''
-      const maxplayers = item?.querySelector('maxplayers')?.getAttribute('value') || ''
-      const minplaytime = item?.querySelector('minplaytime')?.getAttribute('value') || ''
-      const maxplaytime = item?.querySelector('maxplaytime')?.getAttribute('value') || ''
+      const data = await res.json()
       setForm((prev) => ({
         ...prev,
-        name: name || prev.name,
-        description: description || prev.description,
-        players_min: minplayers ? parseInt(minplayers) : prev.players_min,
-        players_max: maxplayers ? parseInt(maxplayers) : prev.players_max,
-        playtime: maxplaytime ? parseInt(maxplaytime) : (minplaytime ? parseInt(minplaytime) : prev.playtime),
-        image_url: image || thumbnail || prev.image_url,
+        name: data.name || prev.name,
+        description: data.description || prev.description,
+        players_min: data.minplayers || prev.players_min,
+        players_max: data.maxplayers || prev.players_max,
+        playtime: data.maxplaytime || data.minplaytime || prev.playtime,
+        image_url: data.image || data.thumbnail || prev.image_url,
         bgg_id: bggId,
       }))
-      setBggStatus(`Imported: ${name}`)
+      setBggStatus(`Imported: ${data.name}`)
     } catch {
       setBggStatus('Import failed.')
     }

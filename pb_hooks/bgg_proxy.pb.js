@@ -1,46 +1,12 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// BGG Proxy Routes
-// Proxies requests to the BGG XML API2 server-side, keeping the auth token secret.
+// BGG Proxy Routes — uses path params to avoid JSVM query-string issues
 //
 // Routes:
-//   GET /api/custom/bgg/search?q=QUERY  → returns JSON array of { id, name, year }
-//   GET /api/custom/bgg/thing?id=NNN    → returns JSON object with game details
-//
-// Setup: set BGG_TOKEN environment variable in your Coolify PocketBase service.
+//   GET /api/custom/bgg/search/{q}   → JSON array of { id, name, year }
+//   GET /api/custom/bgg/thing/{id}   → JSON object with game details
 
 const BGG_BASE = "https://boardgamegeek.com/xmlapi2"
-
-function bggHeaders() {
-  const token = $os.getenv("BGG_TOKEN")
-  return { "Authorization": "Bearer " + token }
-}
-
-// Reliably get a query param from the request regardless of JSVM Go binding style
-function getParam(e, name) {
-  // Go method names keep PascalCase in JSVM — Query() not query()
-  try { const v = e.request.url.Query().Get(name); if (v) return v } catch(_) {}
-  try { const v = e.request.URL.Query().Get(name);  if (v) return v } catch(_) {}
-  // Lowercase fallbacks
-  try { const v = e.request.url.query().Get(name); if (v) return v } catch(_) {}
-  try { const v = e.request.url.query().get(name);  if (v) return v } catch(_) {}
-  // URLSearchParams on the raw query string
-  try {
-    const raw = String(e.request.url.RawQuery || e.request.URL.RawQuery || e.request.url.rawQuery || "")
-    if (raw) { const v = new URLSearchParams(raw).get(name); if (v) return v }
-  } catch(_) {}
-  // Manual parse as last resort
-  try {
-    const raw = String(e.request.url.RawQuery || e.request.URL.RawQuery || e.request.url.rawQuery || "")
-    for (const pair of raw.split("&")) {
-      const idx = pair.indexOf("=")
-      if (idx > -1 && decodeURIComponent(pair.slice(0, idx)) === name) {
-        return decodeURIComponent(pair.slice(idx + 1))
-      }
-    }
-  } catch(_) {}
-  return ""
-}
 
 // Parse XML string to extract text content of a tag
 function xmlText(xml, tag) {
@@ -56,16 +22,15 @@ function xmlAttr(xml, tag, attr) {
 }
 
 // ── Search ──────────────────────────────────────────────────────────────────
-routerAdd("GET", "/api/custom/bgg/search", (e) => {
-  const q = getParam(e, "q")
+routerAdd("GET", "/api/custom/bgg/search/{q}", (e) => {
+  const q = e.request.pathValue("q")
   if (!q) {
-    return e.json(400, { error: "q parameter required" })
+    return e.json(400, { error: "q path segment required" })
   }
 
   const res = $http.send({
     url: BGG_BASE + "/search?query=" + encodeURIComponent(q) + "&type=boardgame",
     method: "GET",
-    headers: bggHeaders(),
     timeout: 15,
   })
 
@@ -73,7 +38,6 @@ routerAdd("GET", "/api/custom/bgg/search", (e) => {
     return e.json(502, { error: "BGG returned " + res.statusCode })
   }
 
-  // Parse XML: extract all <item> elements
   const xml = res.raw
   const itemRe = /<item[^>]*\bid="(\d+)"[^>]*>([\s\S]*?)<\/item>/gi
   const results = []
@@ -93,16 +57,15 @@ routerAdd("GET", "/api/custom/bgg/search", (e) => {
 })
 
 // ── Thing (game detail) ──────────────────────────────────────────────────────
-routerAdd("GET", "/api/custom/bgg/thing", (e) => {
-  const id = getParam(e, "id")
+routerAdd("GET", "/api/custom/bgg/thing/{id}", (e) => {
+  const id = e.request.pathValue("id")
   if (!id) {
-    return e.json(400, { error: "id parameter required" })
+    return e.json(400, { error: "id path segment required" })
   }
 
   const res = $http.send({
     url: BGG_BASE + "/thing?id=" + encodeURIComponent(id) + "&stats=1",
     method: "GET",
-    headers: bggHeaders(),
     timeout: 15,
   })
 
@@ -112,11 +75,9 @@ routerAdd("GET", "/api/custom/bgg/thing", (e) => {
 
   const xml = res.raw
 
-  // Primary name
   const namePrimary = xml.match(/<name[^>]*type="primary"[^>]*value="([^"]*)"/)
   const name = namePrimary ? namePrimary[1] : ""
 
-  // Description — strip XML entities
   const descMatch = xml.match(/<description>([\s\S]*?)<\/description>/)
   let description = descMatch ? descMatch[1] : ""
   description = description
