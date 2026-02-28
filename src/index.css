@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a12;
+  --surface: #10101c;
+  --surface2: #161625;
+  --surface3: #1e1e32;
+  --border: #2a2a45;
+  --border-glow: #4a2a6a;
+  --purple: #9333ea;
+  --purple-lt: #c084fc;
+  --purple-dim: #4c1d95;
+  --pink: #db2777;
+  --teal: #06b6d4;
+  --cream: #e8e8f0;
+  --muted: #6b6b8a;
+  --muted-lt: #9999b8;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--purple-dim); border-radius: 3px; }
+
+button { cursor: pointer; }
+a { text-decoration: none; color: inherit; }
