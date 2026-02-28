@@ -4,6 +4,7 @@ import AdminLogin from './pages/admin/AdminLogin'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminGames from './pages/admin/AdminGames'
 import AdminEvents from './pages/admin/AdminEvents'
+import AdminStaffPicks from './pages/admin/AdminStaffPicks'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route index element={<Navigate to="/admin/games" replace />} />
           <Route path="games" element={<AdminGames />} />
           <Route path="events" element={<AdminEvents />} />
+          <Route path="picks" element={<AdminStaffPicks />} />
         </Route>
       </Routes>
     </BrowserRouter>

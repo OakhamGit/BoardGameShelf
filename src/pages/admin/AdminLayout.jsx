@@ -158,6 +158,7 @@ export default function AdminLayout() {
           <nav className="admin-nav">
             <NavLink to="/admin/games" className="admin-nav-link">Games</NavLink>
             <NavLink to="/admin/events" className="admin-nav-link">Events</NavLink>
+            <NavLink to="/admin/picks" className="admin-nav-link">Staff Picks</NavLink>
           </nav>
           <button className="admin-logout" onClick={handleLogout}>Sign Out</button>
         </div>

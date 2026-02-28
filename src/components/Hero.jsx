@@ -53,7 +53,7 @@ const styles = `
 
 export default function Hero({ events, onFinderOpen }) {
   const today = new Date().toISOString().slice(0, 10)
-  const todayEvents = events.filter((e) => e.date === today)
+  const todayEvents = events.filter((e) => e.date?.slice(0, 10) === today)
 
   return (
     <>
