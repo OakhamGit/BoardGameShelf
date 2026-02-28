@@ -1,14 +1,16 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// BGG Proxy Routes — uses path params to avoid JSVM query-string issues
+// BGG Proxy Routes
 //
 // Routes:
-//   GET /api/custom/bgg/search/{q}   → JSON array of { id, name, year }
-//   GET /api/custom/bgg/thing/{id}   → JSON object with game details
+//   GET /api/custom/bgg/search/{q...}  → JSON array of { id, name, year }
+//   GET /api/custom/bgg/thing/{id}     → JSON object with game details
+//
+// {q...} wildcard allows spaces/slashes in encoded search terms.
+// e.pathParam() is the correct PocketBase v0.22+ JSVM API.
 
 const BGG_BASE = "https://boardgamegeek.com/xmlapi2"
 
-// Parse XML string to extract text content of a tag
 function xmlText(xml, tag) {
   const re = new RegExp("<" + tag + "[^>]*>([\\s\\S]*?)<\\/" + tag + ">", "i")
   const m = xml.match(re)
@@ -22,10 +24,10 @@ function xmlAttr(xml, tag, attr) {
 }
 
 // ── Search ──────────────────────────────────────────────────────────────────
-routerAdd("GET", "/api/custom/bgg/search/{q}", (e) => {
-  const q = e.request.pathValue("q")
+routerAdd("GET", "/api/custom/bgg/search/{q...}", (e) => {
+  const q = e.pathParam("q")
   if (!q) {
-    return e.json(400, { error: "q path segment required" })
+    return e.json(400, { error: "q required" })
   }
 
   const res = $http.send({
@@ -58,9 +60,9 @@ routerAdd("GET", "/api/custom/bgg/search/{q}", (e) => {
 
 // ── Thing (game detail) ──────────────────────────────────────────────────────
 routerAdd("GET", "/api/custom/bgg/thing/{id}", (e) => {
-  const id = e.request.pathValue("id")
+  const id = e.pathParam("id")
   if (!id) {
-    return e.json(400, { error: "id path segment required" })
+    return e.json(400, { error: "id required" })
   }
 
   const res = $http.send({
