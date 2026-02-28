@@ -132,10 +132,7 @@ export default function AdminGames() {
     setBggResults([])
     setBggStatus('Searching BGG…')
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_PB_URL}/api/custom/bgg/search/${encodeURIComponent(bggQuery)}`,
-        { headers: { Authorization: `Bearer ${pb.authStore.token}` } }
-      )
+      const res = await fetch(`/api/bgg/search?q=${encodeURIComponent(bggQuery)}`)
       const data = await res.json()
       setBggResults(data.results || [])
       setBggStatus(data.results?.length ? '' : 'No results found.')
@@ -150,10 +147,7 @@ export default function AdminGames() {
     setBggStatus('Importing game data…')
     setBggResults([])
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_PB_URL}/api/custom/bgg/thing/${bggId}`,
-        { headers: { Authorization: `Bearer ${pb.authStore.token}` } }
-      )
+      const res = await fetch(`/api/bgg/thing?id=${bggId}`)
       const data = await res.json()
       setForm((prev) => ({
         ...prev,
