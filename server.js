@@ -98,7 +98,7 @@ app.get('/api/bgg/thing', async (req, res) => {
 app.use(express.static(join(__dirname, 'dist')))
 
 // SPA fallback — React Router handles client-side routing
-app.get('*', (_req, res) => {
+app.use((_req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'))
 })
 
